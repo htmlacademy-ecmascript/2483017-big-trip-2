@@ -15,6 +15,8 @@ const filtersContainerElement = siteHeaderElement.querySelector('.trip-controls_
 const tripEventsElement = siteMainElement.querySelector('.trip-events');
 const tripMainElement = siteHeaderElement.querySelector('.trip-main');
 
+const newPointButtonElement = siteHeaderElement.querySelector('.trip-main__event-add-btn');
+
 const pointsModel = new PointsModel({
   bigTripApiService: new BigTripApiService(END_POINT, AUTHORIZATION)
 });
@@ -24,7 +26,7 @@ const eventsPresenter = new EventsPresenter({
   eventsContainer: tripEventsElement,
   pointsModel,
   filterModel,
-  onNewPointDestroy: handleNewPointFormClose
+  newPointButtonElement
 });
 
 const filterPresenter = new FilterPresenter({
@@ -38,15 +40,8 @@ const tripInfoPresenter = new TripInfoPresenter({
   pointsModel
 });
 
-const newPointButtonElement = siteHeaderElement.querySelector('.trip-main__event-add-btn');
-
-function handleNewPointFormClose() {
-  newPointButtonElement.disabled = false;
-}
-
-function handleNewPointButtonClick() {
+function newPointButtonClickHandler() {
   eventsPresenter.createPoint();
-  newPointButtonElement.disabled = true;
 }
 
 filterPresenter.init();
@@ -55,6 +50,5 @@ eventsPresenter.init();
 
 pointsModel.init()
   .finally(() => {
-    newPointButtonElement.addEventListener('click', handleNewPointButtonClick);
-    newPointButtonElement.disabled = false;
+    newPointButtonElement.addEventListener('click', newPointButtonClickHandler);
   });

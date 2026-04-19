@@ -1,6 +1,6 @@
 import { render, remove, RenderPosition } from '../framework/render.js';
 import EditPointView from '../view/edit-point-view.js';
-import { UserAction, UpdateType } from '../const.js';
+import { UserAction, UpdateType, BLANK_POINT, POINT_TYPES } from '../const.js';
 
 export default class NewPointPresenter {
   #pointsListContainer = null;
@@ -17,6 +17,10 @@ export default class NewPointPresenter {
     this.#handleDestroy = onDestroy;
   }
 
+  setPointsListContainer(pointsListContainer) {
+    this.#pointsListContainer = pointsListContainer;
+  }
+
   init() {
     if (this.#pointComponent !== null) {
       return;
@@ -24,41 +28,26 @@ export default class NewPointPresenter {
 
     const allDestinations = this.#pointsModel.destinations;
     const allOffers = this.#pointsModel.offers;
-    const pointTypes = allOffers.map((offerItem) => offerItem.type);
+    const pointTypes = POINT_TYPES;
 
-    const defaultType = pointTypes[0];
-    const defaultDestinationId = allDestinations[0]?.id ?? '';
-    const offersData = this.#pointsModel.getOffersByType(defaultType);
+    const offersData = this.#pointsModel.getOffersByType(BLANK_POINT.type);
     const offersByType = offersData ? offersData.offers : [];
-    const destination = this.#pointsModel.getDestinationById(defaultDestinationId);
-
-    const currentDate = new Date();
-    const endDate = new Date(currentDate.getTime() + 60 * 60 * 1000);
-
-    const emptyPoint = {
-      basePrice: 50,
-      dateFrom: currentDate.toISOString(),
-      dateTo: endDate.toISOString(),
-      destination: defaultDestinationId,
-      isFavorite: false,
-      offers: [],
-      type: defaultType
-    };
 
     this.#pointComponent = new EditPointView({
-      point: emptyPoint,
-      destination,
+      point: BLANK_POINT,
+      destination: null,
       allDestinations,
       pointTypes,
       offersByType,
       allOffers,
+      isNewPoint: true,
       onFormSubmit: this.#handleFormSubmit,
       onDeleteClick: this.#handleDeleteClick,
       onRollupClick: this.#handleRollupClick
     });
 
     render(this.#pointComponent, this.#pointsListContainer, RenderPosition.AFTERBEGIN);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
+    document.addEventListener('keydown', this.#escapeKeyDownHandler);
   }
 
   destroy() {
@@ -69,7 +58,7 @@ export default class NewPointPresenter {
     this.#handleDestroy();
     remove(this.#pointComponent);
     this.#pointComponent = null;
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    document.removeEventListener('keydown', this.#escapeKeyDownHandler);
   }
 
   setSaving() {
@@ -81,6 +70,13 @@ export default class NewPointPresenter {
 
   setAborting() {
     const resetFormState = () => {
+      if (
+        this.#pointComponent === null ||
+        !document.body.contains(this.#pointComponent.element)
+      ) {
+        return;
+      }
+
       this.#pointComponent.updateElement({
         isDisabled: false,
         isSaving: false,
@@ -107,7 +103,7 @@ export default class NewPointPresenter {
     this.destroy();
   };
 
-  #escKeyDownHandler = (evt) => {
+  #escapeKeyDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       this.destroy();

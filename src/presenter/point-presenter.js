@@ -30,8 +30,8 @@ export default class PointPresenter {
   init(point, allDestinations, pointTypes) {
     this.#point = point;
 
-    const prevPointComponent = this.#pointComponent;
-    const prevEditPointComponent = this.#editPointComponent;
+    const previousPointComponent = this.#pointComponent;
+    const previousEditPointComponent = this.#editPointComponent;
 
     const destination = this.#pointsModel.getDestinationById(point.destination);
     const offersData = this.#pointsModel.getOffersByType(point.type);
@@ -58,22 +58,22 @@ export default class PointPresenter {
       onRollupClick: this.#handleRollupClick
     });
 
-    if (prevPointComponent === null || prevEditPointComponent === null) {
+    if (previousPointComponent === null || previousEditPointComponent === null) {
       render(this.#pointComponent, this.#pointsListContainer);
       return;
     }
 
     if (this.#mode === Mode.DEFAULT) {
-      replace(this.#pointComponent, prevPointComponent);
+      replace(this.#pointComponent, previousPointComponent);
     }
 
     if (this.#mode === Mode.EDITING) {
-      replace(this.#pointComponent, prevEditPointComponent);
+      replace(this.#pointComponent, previousEditPointComponent);
       this.#mode = Mode.DEFAULT;
     }
 
-    remove(prevPointComponent);
-    remove(prevEditPointComponent);
+    remove(previousPointComponent);
+    remove(previousEditPointComponent);
   }
 
   destroy() {
@@ -83,11 +83,7 @@ export default class PointPresenter {
 
   resetView() {
     if (this.#mode !== Mode.DEFAULT) {
-      const destination = this.#pointsModel.getDestinationById(this.#point.destination);
-      const offersData = this.#pointsModel.getOffersByType(this.#point.type);
-      const offersByType = offersData ? offersData.offers : [];
-
-      this.#editPointComponent.reset(this.#point, destination, offersByType);
+      this.#resetEditPointComponent();
       this.#replaceEditToPoint();
     }
   }
@@ -117,6 +113,14 @@ export default class PointPresenter {
     }
 
     const resetFormState = () => {
+      if (
+        this.#editPointComponent === null ||
+        this.#mode !== Mode.EDITING ||
+        !document.body.contains(this.#editPointComponent.element)
+      ) {
+        return;
+      }
+
       this.#editPointComponent.updateElement({
         isDisabled: false,
         isSaving: false,
@@ -129,14 +133,14 @@ export default class PointPresenter {
 
   #replacePointToEdit() {
     replace(this.#editPointComponent, this.#pointComponent);
-    document.addEventListener('keydown', this.#escKeyDownHandler);
+    document.addEventListener('keydown', this.#escapeKeyDownHandler);
     this.#handleModeChange();
     this.#mode = Mode.EDITING;
   }
 
   #replaceEditToPoint() {
     replace(this.#pointComponent, this.#editPointComponent);
-    document.removeEventListener('keydown', this.#escKeyDownHandler);
+    document.removeEventListener('keydown', this.#escapeKeyDownHandler);
     this.#mode = Mode.DEFAULT;
   }
 
@@ -180,15 +184,18 @@ export default class PointPresenter {
     this.#replaceEditToPoint();
   };
 
-  #escKeyDownHandler = (evt) => {
+  #resetEditPointComponent() {
+    const destination = this.#pointsModel.getDestinationById(this.#point.destination);
+    const offersData = this.#pointsModel.getOffersByType(this.#point.type);
+    const offersByType = offersData ? offersData.offers : [];
+
+    this.#editPointComponent.reset(this.#point, destination, offersByType);
+  }
+
+  #escapeKeyDownHandler = (evt) => {
     if (evt.key === 'Escape') {
       evt.preventDefault();
-
-      const destination = this.#pointsModel.getDestinationById(this.#point.destination);
-      const offersData = this.#pointsModel.getOffersByType(this.#point.type);
-      const offersByType = offersData ? offersData.offers : [];
-
-      this.#editPointComponent.reset(this.#point, destination, offersByType);
+      this.#resetEditPointComponent();
       this.#replaceEditToPoint();
     }
   };

@@ -6,9 +6,10 @@ const filter = {
   [FilterType.FUTURE]: (points) =>
     points.filter((point) => dayjs(point.dateFrom).isAfter(dayjs())),
   [FilterType.PRESENT]: (points) =>
-    points.filter((point) =>
-      dayjs(point.dateFrom).isBefore(dayjs()) && dayjs(point.dateTo).isAfter(dayjs())
-    ),
+    points.filter((point) => {
+      const now = dayjs();
+      return !dayjs(point.dateFrom).isAfter(now) && !dayjs(point.dateTo).isBefore(now);
+    }),
   [FilterType.PAST]: (points) =>
     points.filter((point) => dayjs(point.dateTo).isBefore(dayjs()))
 };

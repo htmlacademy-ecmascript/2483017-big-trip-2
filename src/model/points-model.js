@@ -6,6 +6,7 @@ export default class PointsModel extends Observable {
   #destinations = [];
   #offers = [];
   #points = [];
+  #hasError = false;
 
   constructor({bigTripApiService}) {
     super();
@@ -24,6 +25,10 @@ export default class PointsModel extends Observable {
     return this.#offers;
   }
 
+  get hasError() {
+    return this.#hasError;
+  }
+
   async init() {
     try {
       const [points, destinations, offers] = await Promise.all([
@@ -35,10 +40,12 @@ export default class PointsModel extends Observable {
       this.#points = points.map(this.#adaptToClient);
       this.#destinations = destinations;
       this.#offers = offers;
+      this.#hasError = false;
     } catch(err) {
       this.#points = [];
       this.#destinations = [];
       this.#offers = [];
+      this.#hasError = true;
     }
     this._notify(UpdateType.INIT);
   }

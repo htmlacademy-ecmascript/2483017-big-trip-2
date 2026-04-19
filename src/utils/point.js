@@ -1,8 +1,9 @@
 import dayjs from 'dayjs';
 
+const MINUTES_IN_HOUR = 60;
+const MINUTES_IN_DAY = 1440;
 const DATE_FORMAT = 'MMM DD';
 const TIME_FORMAT = 'HH:mm';
-const TRIP_DAY_FORMAT = 'DD';
 const TRIP_MONTH_DAY_FORMAT = 'DD MMM';
 
 function humanizeEventDate(date, format = DATE_FORMAT) {
@@ -21,42 +22,28 @@ function humanizeTripDates(dateFrom, dateTo) {
   const startDate = dayjs(dateFrom);
   const endDate = dayjs(dateTo);
 
-  if (startDate.isSame(endDate, 'month')) {
-    return `${startDate.format(TRIP_DAY_FORMAT)} — ${endDate.format(TRIP_MONTH_DAY_FORMAT)}`;
-  }
-
   return `${startDate.format(TRIP_MONTH_DAY_FORMAT)} — ${endDate.format(TRIP_MONTH_DAY_FORMAT)}`;
 }
 
 function humanizeDuration(dateFrom, dateTo) {
   const diffInMinutes = dayjs(dateTo).diff(dayjs(dateFrom), 'minute');
 
-  if (diffInMinutes < 60) {
+  if (diffInMinutes < MINUTES_IN_HOUR) {
     return `${diffInMinutes}M`;
   }
 
-  if (diffInMinutes < 1440) {
-    const hours = Math.floor(diffInMinutes / 60);
-    const minutes = diffInMinutes % 60;
+  if (diffInMinutes < MINUTES_IN_DAY) {
+    const hours = Math.floor(diffInMinutes / MINUTES_IN_HOUR);
+    const minutes = diffInMinutes % MINUTES_IN_HOUR;
 
-    return minutes === 0
-      ? `${String(hours).padStart(2, '0')}H`
-      : `${String(hours).padStart(2, '0')}H${String(minutes).padStart(2, '0')}M`;
+    return `${String(hours).padStart(2, '0')}H ${String(minutes).padStart(2, '0')}M`;
   }
 
-  const daysCount = Math.floor(diffInMinutes / 1440);
-  const restHoursCount = Math.floor((diffInMinutes % 1440) / 60);
-  const restMinutesCount = diffInMinutes % 60;
+  const daysCount = Math.floor(diffInMinutes / MINUTES_IN_DAY);
+  const restHoursCount = Math.floor((diffInMinutes % MINUTES_IN_DAY) / MINUTES_IN_HOUR);
+  const restMinutesCount = diffInMinutes % MINUTES_IN_HOUR;
 
-  if (restHoursCount === 0 && restMinutesCount === 0) {
-    return `${String(daysCount).padStart(2, '0')}D`;
-  }
-
-  if (restMinutesCount === 0) {
-    return `${String(daysCount).padStart(2, '0')}D${String(restHoursCount).padStart(2, '0')}H`;
-  }
-
-  return `${String(daysCount).padStart(2, '0')}D${String(restHoursCount).padStart(2, '0')}H${String(restMinutesCount).padStart(2, '0')}M`;
+  return `${String(daysCount).padStart(2, '0')}D ${String(restHoursCount).padStart(2, '0')}H ${String(restMinutesCount).padStart(2, '0')}M`;
 }
 
 function sortPointDay(pointA, pointB) {

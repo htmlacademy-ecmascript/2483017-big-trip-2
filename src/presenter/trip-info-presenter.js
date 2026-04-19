@@ -1,7 +1,9 @@
-import { render, replace, remove } from '../framework/render.js';
+import { render, replace, remove, RenderPosition } from '../framework/render.js';
 import { UpdateType } from '../const.js';
 import TripInfoView from '../view/trip-info-view.js';
 import { sortPointDay, humanizeTripDates } from '../utils/point.js';
+
+const MAX_VISIBLE_DESTINATIONS = 3;
 
 export default class TripInfoPresenter {
   #tripMainContainer = null;
@@ -17,11 +19,11 @@ export default class TripInfoPresenter {
 
   init() {
     const points = [...this.#pointsModel.points].sort(sortPointDay);
-    const prevTripInfoComponent = this.#tripInfoComponent;
+    const previousTripInfoComponent = this.#tripInfoComponent;
 
     if (!points.length) {
-      if (prevTripInfoComponent !== null) {
-        remove(prevTripInfoComponent);
+      if (previousTripInfoComponent !== null) {
+        remove(previousTripInfoComponent);
         this.#tripInfoComponent = null;
       }
       return;
@@ -30,13 +32,13 @@ export default class TripInfoPresenter {
     const tripInfo = this.#createTripInfo(points);
     this.#tripInfoComponent = new TripInfoView({ tripInfo });
 
-    if (prevTripInfoComponent === null) {
-      render(this.#tripInfoComponent, this.#tripMainContainer, 'afterbegin');
+    if (previousTripInfoComponent === null) {
+      render(this.#tripInfoComponent, this.#tripMainContainer, RenderPosition.AFTERBEGIN);
       return;
     }
 
-    replace(this.#tripInfoComponent, prevTripInfoComponent);
-    remove(prevTripInfoComponent);
+    replace(this.#tripInfoComponent, previousTripInfoComponent);
+    remove(previousTripInfoComponent);
   }
 
   #handleModelEvent = (updateType) => {
@@ -64,7 +66,7 @@ export default class TripInfoPresenter {
       .filter((destination) => destination)
       .map((destination) => destination.name);
 
-    if (destinations.length <= 3) {
+    if (destinations.length <= MAX_VISIBLE_DESTINATIONS) {
       return destinations.join(' — ');
     }
 
